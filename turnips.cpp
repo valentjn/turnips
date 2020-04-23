@@ -367,7 +367,8 @@ void sample(int argc, char *argv[]) {
 
   size_t i = 0;
   uint32_t prevPattern = userPrevPattern;
-  const bool randomPrevPattern(userPrevPattern >= Turnips::numberOfPatterns);
+  const bool takeSundayPriceFromInput = (userPrices[0] > 0);
+  const bool randomPrevPattern = (userPrevPattern >= Turnips::numberOfPatterns);
   uint32_t pattern;
   int32_t prices[Turnips::numberOfDays];
   const int32_t tol = 1;
@@ -403,7 +404,7 @@ void sample(int argc, char *argv[]) {
     }
 
     if (turnips.computePrices(prevPattern, rng, userPattern, userPrices, pattern, prices,
-          true, tol)) {
+          takeSundayPriceFromInput, tol)) {
       numberOfMatches++;
 
       if (verbose) {
