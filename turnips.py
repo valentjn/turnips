@@ -142,6 +142,17 @@ def printAdvice(text, width=40, name="Tom Nook", imageName="tomNook.dat", imageW
 
 
 
+def formatPercentage(x, article=None):
+  x = int(min(max(round(100 * x), 0), 100))
+  prefix = ""
+
+  if article == "indefinite":
+    prefix = ("an " if (x in [8, 11, 18]) or (80 <= x < 90) else "a ")
+
+  return "{}{:}%".format(prefix, x)
+
+
+
 def main():
   numberOfWorkers = 4
   seed = 10 * random.randint(0, 1000000-1)
@@ -203,15 +214,17 @@ def main():
   print(formatString.format("Current", *formatProb(probPattern)))
   print("")
 
-  if prices[now] < quantileMaxPrice[-1,0]:
+  probLowerPrice = cdfMaxPrice[prices[now]]
+
+  if probLowerPrice < 0.01:
     advice = "You should wait to sell, hm? Prices will be higher later in the week, yes, yes."
-  elif prices[now] > quantileMaxPrice[-1,1]:
-    advice = "The prices can only go down from now on, yes, yes. You should sell now, hm?"
+  elif probLowerPrice > 0.99:
+    advice = "The prices will only go down from now on, yes, yes. You should sell now, hm?"
   else:
-    probHigherPrice = cdfMaxPrice[prices[now]]
-    advice = ("Well, it's hard to say right now, hm? There's a {:.0f}% chance of prices going up "
-        "and a {:.0f}% chance of prices going down, yes?").format(
-          100 * probHigherPrice, 100 * (1 - probHigherPrice))
+    advice = ("Well, it's hard to say right now, hm? There's {} chance of prices going up "
+        "and {} chance of prices going down, yes?").format(
+          formatPercentage(1 - probLowerPrice, article="indefinite"),
+          formatPercentage(probLowerPrice, article="indefinite"))
 
   printAdvice(advice)
   print("")
