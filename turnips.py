@@ -47,7 +47,7 @@ import scipy.interpolate
 
 
 numberOfPatterns = 4
-numberOfDays = 14
+numberOfHalfDays = 14
 numberOfPrices = 700
 
 
@@ -64,7 +64,7 @@ def runWorker(numberOfWorkers, seed, prevPattern, pattern, prices, workerId):
   stdout = process.stdout.decode()
 
   results = np.reshape(np.fromstring(stdout, sep=" ", dtype=np.int),
-      [-1, 1 + 2 * numberOfPatterns + (numberOfDays + 1) * numberOfPrices])
+      [-1, 1 + 2 * numberOfPatterns + (numberOfHalfDays + 1) * numberOfPrices])
   return results
 
 
@@ -186,8 +186,8 @@ def main():
 
   probPrevPattern = data.extract(4) / numberOfMatches
   probPattern = data.extract(4) / numberOfMatches
-  probPrices = (np.reshape(data.extract(numberOfDays * numberOfPrices), (numberOfDays, -1)).T /
-      numberOfMatches)
+  probPrices = (np.reshape(data.extract(numberOfHalfDays * numberOfPrices),
+      (numberOfHalfDays, -1)).T / numberOfMatches)
   probMaxPrice = data.extract(numberOfPrices) / numberOfMatches
 
   t = np.arange(probPrices.shape[1])

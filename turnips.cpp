@@ -61,12 +61,12 @@ inline int intCeil(float x) {
 class Turnips {
  public:
   static const size_t numberOfPatterns = 4;
-  static const size_t numberOfDays = 14;
+  static const size_t numberOfHalfDays = 14;
   static const size_t numberOfPrices = 700;
 
   inline bool computePrices(uint32_t prevPattern, RNG &rng,
-      uint32_t userPattern, const int32_t userPrices[numberOfDays],
-      uint32_t &pattern, int32_t prices[numberOfDays],
+      uint32_t userPattern, const int32_t userPrices[numberOfHalfDays],
+      uint32_t &pattern, int32_t prices[numberOfHalfDays],
       const bool takeSundayPriceFromInput = false, const int32_t tol = 0)
       __attribute__((always_inline)) {
     if (takeSundayPriceFromInput) {
@@ -172,7 +172,7 @@ class Turnips {
       prices[t++] = intCeil(rng.getRandomFloat(0.9, 1.4) * prices[0]);
       if ((userPrices[t-1] > 0) && (std::abs(prices[t-1] - userPrices[t-1]) > tol)) return false;
 
-      for (; t < numberOfDays; t++) {
+      for (; t < numberOfHalfDays; t++) {
         prices[t] = intCeil(rng.getRandomFloat(0.4, 0.9) * prices[0]);
         if ((userPrices[t] > 0) && (std::abs(prices[t] - userPrices[t]) > tol)) return false;
       }
@@ -182,7 +182,7 @@ class Turnips {
       rate = 0.9;
       rate -= rng.getRandomFloat(0, 0.05);
 
-      for (size_t t = 2; t < numberOfDays; t++) {
+      for (size_t t = 2; t < numberOfHalfDays; t++) {
         prices[t] = intCeil(rate * prices[0]);
         if ((userPrices[t] > 0) && (std::abs(prices[t] - userPrices[t]) > tol)) return false;
         rate -= 0.03;
@@ -215,10 +215,10 @@ class Turnips {
       if ((userPrices[t-1] > 0) && (std::abs(prices[t-1] - userPrices[t-1]) > tol)) return false;
 
       // decreasing phase after the peak
-      if (t < numberOfDays) {
+      if (t < numberOfHalfDays) {
         rate = rng.getRandomFloat(0.9, 0.4);
 
-        for (; t < numberOfDays; t++) {
+        for (; t < numberOfHalfDays; t++) {
           prices[t] = intCeil(rate * prices[0]);
           if ((userPrices[t] > 0) && (std::abs(prices[t] - userPrices[t]) > tol)) return false;
           rate -= 0.03;
@@ -252,16 +252,16 @@ void compute(int argc, char *argv[]) {
   const uint32_t seed = std::stoi(argv[2]);
   const uint32_t prevPattern = std::stoi(argv[3]);
   uint32_t pattern;
-  int32_t prices[Turnips::numberOfDays];
+  int32_t prices[Turnips::numberOfHalfDays];
   RNG rng(seed);
   const uint32_t userPattern = 9999;
-  const int32_t userPrices[Turnips::numberOfDays] = {};
+  const int32_t userPrices[Turnips::numberOfHalfDays] = {};
 
   Turnips turnips;
   turnips.computePrices(prevPattern, rng, userPattern, userPrices, pattern, prices);
 
   std::cout << pattern;
-  for (size_t t = 0; t < Turnips::numberOfDays; t++) std::cout << " " << prices[t];
+  for (size_t t = 0; t < Turnips::numberOfHalfDays; t++) std::cout << " " << prices[t];
   std::cout << std::endl;
 }
 
@@ -283,9 +283,9 @@ void bruteForce(int argc, char *argv[]) {
 
   const uint32_t userPrevPattern = std::stoi(argv[4]);
   const uint32_t userPattern = std::stoi(argv[5]);
-  int32_t userPrices[Turnips::numberOfDays];
+  int32_t userPrices[Turnips::numberOfHalfDays];
 
-  for (size_t t = 0; t < Turnips::numberOfDays; t++) {
+  for (size_t t = 0; t < Turnips::numberOfHalfDays; t++) {
     userPrices[t] = std::stoi(argv[t + 6]);
   }
 
@@ -297,7 +297,7 @@ void bruteForce(int argc, char *argv[]) {
   std::cerr << std::fixed << std::setprecision(3);
 
   uint32_t pattern;
-  int32_t prices[Turnips::numberOfDays];
+  int32_t prices[Turnips::numberOfHalfDays];
   RNG rng;
   Turnips turnips;
 
@@ -320,7 +320,7 @@ void bruteForce(int argc, char *argv[]) {
 
       if (turnips.computePrices(prevPattern, rng, userPattern, userPrices, pattern, prices)) {
         std::cout << seed << " " << prevPattern << " " << pattern;
-        for (size_t t = 0; t < Turnips::numberOfDays; t++) std::cout << " " << prices[t];
+        for (size_t t = 0; t < Turnips::numberOfHalfDays; t++) std::cout << " " << prices[t];
         std::cout << std::endl;
         numberOfMatches++;
       }
@@ -354,10 +354,10 @@ void sample(int argc, char *argv[]) {
   const uint32_t seed = std::stoi(argv[5]);
   const uint32_t userPrevPattern = std::stoi(argv[6]);
   const uint32_t userPattern = std::stoi(argv[7]);
-  int32_t userPrices[Turnips::numberOfDays];
+  int32_t userPrices[Turnips::numberOfHalfDays];
   size_t now = 0;
 
-  for (size_t t = 0; t < Turnips::numberOfDays; t++) {
+  for (size_t t = 0; t < Turnips::numberOfHalfDays; t++) {
     userPrices[t] = std::stoi(argv[t + 8]);
     if (userPrices[t] > 0) now = t + 1;
   }
@@ -370,7 +370,7 @@ void sample(int argc, char *argv[]) {
   const bool takeSundayPriceFromInput = (userPrices[0] > 0);
   const bool randomPrevPattern = (userPrevPattern >= Turnips::numberOfPatterns);
   uint32_t pattern;
-  int32_t prices[Turnips::numberOfDays];
+  int32_t prices[Turnips::numberOfHalfDays];
   const int32_t tol = 1;
   RNG rng(seed);
   Turnips turnips;
@@ -378,7 +378,7 @@ void sample(int argc, char *argv[]) {
 
   std::vector<size_t> prevPatternCounts(Turnips::numberOfPatterns, 0);
   std::vector<size_t> patternCounts(Turnips::numberOfPatterns, 0);
-  std::vector<std::vector<size_t>> pricesHistogram(Turnips::numberOfDays,
+  std::vector<std::vector<size_t>> pricesHistogram(Turnips::numberOfHalfDays,
       std::vector<size_t>(Turnips::numberOfPrices, 0));
   std::vector<size_t> maxPriceHistogram(Turnips::numberOfPrices, 0);
 
@@ -409,17 +409,17 @@ void sample(int argc, char *argv[]) {
 
       if (verbose) {
         std::cout << prevPattern << " " << pattern;
-        for (size_t t = 0; t < Turnips::numberOfDays; t++) std::cout << " " << prices[t];
+        for (size_t t = 0; t < Turnips::numberOfHalfDays; t++) std::cout << " " << prices[t];
         std::cout << std::endl;
       } else {
         prevPatternCounts[prevPattern]++;
         patternCounts[pattern]++;
 
-        for (size_t t = 0; t < Turnips::numberOfDays; t++) {
+        for (size_t t = 0; t < Turnips::numberOfHalfDays; t++) {
           pricesHistogram[t][prices[t]]++;
         }
 
-        if (now < Turnips::numberOfDays) {
+        if (now < Turnips::numberOfHalfDays) {
           maxPriceHistogram[*std::max_element(std::begin(prices) + now, std::end(prices))]++;
         }
       }
