@@ -196,7 +196,7 @@ def main():
   meanMaxPrice = np.sum(probMaxPrice * allPrices)
   cdfPrices = np.cumsum(probPrices, axis=0)
   cdfMaxPrice = np.cumsum(probMaxPrice, axis=0)
-  now = np.argmax(np.nonzero(prices != 0))
+  now = np.nonzero(prices != 0)[0][-1]
 
   qPrices = np.linspace(0.5, 1, 256)
   quantilePrices = np.array([[[computeQuantile(cdfPrices[:,i], (1-q if j == 0 else q))
