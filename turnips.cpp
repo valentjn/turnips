@@ -355,7 +355,7 @@ void sample(int argc, char *argv[]) {
   const uint32_t userPrevPattern = std::stoi(argv[6]);
   const uint32_t userPattern = std::stoi(argv[7]);
   int32_t userPrices[Turnips::numberOfHalfDays];
-  size_t now = 0;
+  size_t now = 2;
 
   for (size_t t = 0; t < Turnips::numberOfHalfDays; t++) {
     userPrices[t] = std::stoi(argv[t + 8]);
