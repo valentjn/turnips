@@ -294,8 +294,8 @@ PATTERN is one of the following:
 
   ax3.set_xlim(xl)
   ax3.set_ylim(yl)
-  ax3.set_title("Turnip Price Forecast (Based on {} Samples)".format(numberOfMatches),
-      fontproperties=arialRoundedMtBold, fontsize=14, color=foregroundColor)
+  title = "Turnip Price Forecast (Based on {} Samples)".format(numberOfMatches)
+  ax3.set_title(title, fontproperties=arialRoundedMtBold, fontsize=14, color=foregroundColor)
   ax3.set_xticks(t)
   ax3.set_xticklabels(["Sun", "", "Mon", "", "Tue", "", "Wed", "", "Thu", "", "Fri", "", "Sat", ""],
       fontproperties=arialRoundedMtRegular, fontsize=12)
@@ -339,7 +339,7 @@ PATTERN is one of the following:
       color=foregroundColor, fontproperties=arialRoundedMtBold, fontsize=12)
   ax3.text(*trafo((0.97, 0.015)), "Time", ha="right", va="bottom",
       color=foregroundColor, fontproperties=arialRoundedMtBold, fontsize=12)
-  plt.savefig("/tmp/mafs.png", facecolor=backgroundColor)
+  fig.canvas.set_window_title(title)
 
   try:
     plt.show()
