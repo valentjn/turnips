@@ -232,6 +232,9 @@ PATTERN is one of the following:
           "and {} chance of prices going down, yes?").format(
             formatPercentage(1 - probLowerPrice, article="indefinite"),
             formatPercentage(probLowerPrice, article="indefinite"))
+      if probLowerPrice < 0.1:   advice += " You should probably wait, yes, yes."
+      elif probLowerPrice > 0.9: advice += " You should probably sell, yes, yes."
+      else:                      advice += " It's up to you, yes, yes."
 
     printAdvice(advice)
     print("")
