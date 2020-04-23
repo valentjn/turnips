@@ -128,12 +128,16 @@ def printAdvice(text, width=40, name="Tom Nook", imageName="tomNook.dat", imageW
   bubble.append("{}{}{}".format(bubbleLeftBorder[-1], bubbleBottomBorder, bubbleRightBorder[-1]))
 
   with open(imageName, "rb") as f: image = f.read().splitlines()
+  if len(bubble) > len(image): image = ((len(bubble) - len(image)) * [imageWidth * b" "]) + image
+  elif len(bubble) < len(image): bubble = ((len(image) - len(bubble)) * [""]) + bubble
 
-  for i in range(max(len(image), len(bubble))):
-    if i < len(image): sys.stdout.buffer.write(image[i])
-    else:              print(imageWidth * " ", end="")
-    print(" ", end="")
-    if i < len(bubble): print(bubble[i], end="")
+  for imageLine, bubbleLine in zip(image, bubble):
+    sys.stdout.buffer.write(imageLine)
+
+    if bubble != "":
+      print(" ", end="")
+      print(bubbleLine, end="")
+
     print("")
 
 
