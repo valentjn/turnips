@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
+import argparse
 import functools
 import multiprocessing
+import os
 import random
 import subprocess
 import sys
@@ -10,39 +12,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.interpolate
-
-
-
-# def runWorker(numberOfWorkers, workerId):
-#   cmd = ["./turnips", "bruteForce", str(numberOfWorkers), str(workerId), "2", "9999",
-#       "92", "92",   "82", "79",   "76", "118",   "0", "0",   "0", "0",   "0", "0",   "0", "0"]
-#       # 148 271 145
-#   process = subprocess.run(cmd, stdout=subprocess.PIPE)
-#   a = process.stdout.decode()
-#   print("{}: {}, #{}#, #{}#".format(workerId, len(a), a[:100], a[-100:]))
-#   matches = np.reshape(np.fromstring(process.stdout.decode(), dtype=int, sep=" "), [-1, 17])
-#   return matches
-
-
-
-# def main():
-#   """
-# import numpy as np
-# a = np.load("matches.npy")
-# np.histogram(a[:,2], [-0.5, 0.5, 1.5, 2.5, 3.5])[0] / a.shape[0]
-# np.amin(np.amax(a[a[:,2]==1,4:], axis=1))
-# np.mean(np.amax(a[a[:,2]==1,4:], axis=1))
-# np.amax(np.amax(a[a[:,2]==1,4:], axis=1))
-#   """
-#   numberOfWorkers = 4
-
-#   with multiprocessing.Pool(processes=numberOfWorkers) as pool:
-#     matches = pool.map(functools.partial(runWorker, numberOfWorkers), list(range(numberOfWorkers)))
-
-#   matches = np.vstack(matches)
-#   matches = matches[np.lexsort(matches.T),:]
-#   print(len(matches))
-#   np.savez_compressed("matches.npyz", matches)
 
 
 
@@ -153,29 +122,74 @@ def formatPercentage(x, article=None):
 
 
 
+def parsePattern(s):
+  if s.strip("0123456789") == "":
+    x = int(s)
+    return (x if x < numberOfPatterns else None)
+  else:
+    patterns = ["random", "large-spike", "decreasing", "small-spike"]
+    if s == "unknown": return None
+    elif s not in patterns: raise argparse.ArgumentTypeError("unknown pattern")
+    else: return patterns.index(s)
+
+def parsePrices(x):
+  if len(x) > numberOfHalfDays:
+    raise argparse.ArgumentTypeError("more than 14 prices specified")
+  elif any(y < 0 for y in x):
+    raise argparse.ArgumentTypeError("prices must be non-negative")
+
+  x = np.array([int(y) for y in x] + ((numberOfHalfDays - len(x)) * [0]))
+
+  if x[0] != x[1]:
+    raise argparse.ArgumentTypeError("first and second price must equal (Sunday buying price)")
+
+  return x
+
+
+
 def main():
-  numberOfWorkers = 4
+  parser = argparse.ArgumentParser(
+      description="""
+Yet another turnip price simulator for Animal Crossing: New Horizons
+
+PATTERN is one of the following:
+* 0 or "random"
+* 1 or "large-spike"
+* 2 or "decreasing"
+* 3 or "small-spike"
+* any integer >= 4 or "unknown"
+""", formatter_class=argparse.RawDescriptionHelpFormatter)
+  parser.add_argument("--prev-pattern", dest="prevPattern", metavar="PATTERN", type=parsePattern,
+      default="unknown",
+      help="The distribution of the pattern of the current week depends on which pattern "
+        "held for the previous week. If you know the pattern of the previous week (but not "
+        "this week's pattern), you can specify it with this option. This will improve "
+        "results. Defaults to \"unknown\".")
+  parser.add_argument("--pattern", dest="pattern", metavar="PATTERN", type=parsePattern,
+      default="unknown",
+      help="This week's pattern, if you already know it (usually you don't). "
+        "Overrides --prev-pattern, defaults to \"unknown\".")
+  parser.add_argument("-j", dest="numberOfWorkers", metavar="INT", type=int, default=os.cpu_count(),
+      help=("Number of parallel workers for the sampling process, "
+        "defaults to {}.").format(os.cpu_count()))
+  parser.add_argument("--prices", dest="prices", metavar="INT", nargs="*", type=int, default=[],
+      help="Up to 14 space-separated turnip prices. The prices are given for each half-day "
+        "beginning with Sunday: Sun AM, Sun PM, Mon AM, Mon PM, Tue AM, Tue PM, etc. "
+        "At least two prices have to be given. As there is only one price on Sunday "
+        "(the buying price at Daisy Mae), the first two prices must equal. "
+        "Use 0 as price if you don't know the actual price for a half-day "
+        "(because it's in the future or because you forgot to write it down). "
+        "If less than 14 prices are given, the remaining prices are assumed to "
+        "be unknown as well.")
+  args = parser.parse_args()
+  args.prices = parsePrices(args.prices)
+
   seed = 10 * random.randint(0, 1000000-1)
-  pattern = None
-
-  #prevPattern = 2
-  #prices = [92, 92, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  #prices = [92, 92, 82, 79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  #prices = [92, 92, 82, 79, 76, 118, 0, 0, 0, 0, 0, 0, 0, 0]
-  #prices = [92, 92, 82, 79, 76, 118, 148, 271, 0, 0, 0, 0, 0, 0]
-
-  prevPattern = 1
-  #prices = [92, 92, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  #prices = [92, 92, 45, 41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  #prices = [92, 92, 45, 41, 37, 33, 0, 0, 0, 0, 0, 0, 0, 0]
-  prices = [92, 92, 45, 41, 37, 33, 30, 105, 0, 0, 0, 0, 0, 0]
-
-  prices = np.array(prices)
   print("Generating samples... ", end="")
 
-  with multiprocessing.Pool(processes=numberOfWorkers) as pool:
-    results = pool.map(functools.partial(runWorker, numberOfWorkers, seed, prevPattern,
-        pattern, prices), list(range(numberOfWorkers)))
+  with multiprocessing.Pool(processes=args.numberOfWorkers) as pool:
+    results = pool.map(functools.partial(runWorker, args.numberOfWorkers, seed, args.prevPattern,
+        args.pattern, args.prices), list(range(args.numberOfWorkers)))
 
   results = np.vstack(results).astype(np.float)
   data = DataExtractor(np.sum(results, axis=0))
@@ -196,7 +210,7 @@ def main():
   meanMaxPrice = np.sum(probMaxPrice * allPrices)
   cdfPrices = np.cumsum(probPrices, axis=0)
   cdfMaxPrice = np.cumsum(probMaxPrice, axis=0)
-  now = np.nonzero(prices != 0)[0][-1]
+  now = (np.nonzero(args.prices != 0)[0][-1] if np.any(args.prices != 0) else None)
 
   qPrices = np.linspace(0.5, 1, 256)
   quantilePrices = np.array([[[computeQuantile(cdfPrices[:,i], (1-q if j == 0 else q))
@@ -214,20 +228,21 @@ def main():
   print(formatString.format("Current", *formatProb(probPattern)))
   print("")
 
-  probLowerPrice = cdfMaxPrice[prices[now]]
+  if now is not None:
+    probLowerPrice = cdfMaxPrice[args.prices[now]]
 
-  if probLowerPrice < 0.01:
-    advice = "You should wait to sell, hm? Prices will be higher later in the week, yes, yes."
-  elif probLowerPrice > 0.99:
-    advice = "The prices will only go down from now on, yes, yes. You should sell now, hm?"
-  else:
-    advice = ("Well, it's hard to say right now, hm? There's {} chance of prices going up "
-        "and {} chance of prices going down, yes?").format(
-          formatPercentage(1 - probLowerPrice, article="indefinite"),
-          formatPercentage(probLowerPrice, article="indefinite"))
+    if probLowerPrice < 0.01:
+      advice = "You should wait to sell, hm? Prices will be higher later in the week, yes, yes."
+    elif probLowerPrice > 0.99:
+      advice = "The prices will only go down from now on, yes, yes. You should sell now, hm?"
+    else:
+      advice = ("Well, it's hard to say right now, hm? There's {} chance of prices going up "
+          "and {} chance of prices going down, yes?").format(
+            formatPercentage(1 - probLowerPrice, article="indefinite"),
+            formatPercentage(probLowerPrice, article="indefinite"))
 
-  printAdvice(advice)
-  print("")
+    printAdvice(advice)
+    print("")
 
   fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
 
@@ -270,11 +285,14 @@ def main():
   ax3.plot(t, meanPrices, ".", color=lineColor, zorder=1000)
   ax1.plot([0, 1], 2 * [meanMaxPrice], "--", color=lineColor, zorder=1000)
 
-  for price in [prices[now], *quantileMaxPrice[-1,:]]:
+  prices = list(quantileMaxPrice[-1,:])
+  if now is not None: prices.append(args.prices[now])
+
+  for price in prices:
     ax3.plot(xl, 2 * [price], ":", color="#888888")
     ax1.plot([0, 1], 2 * [price], ":", color="#888888")
 
-  ax3.plot(2 * [now], yl, ":", color="#ff6666")
+  if now is not None: ax3.plot(2 * [now], yl, ":", color="#ff6666")
 
   ax1.set_xlim([0, 1])
   ax2.set_xlim([0, 1])
