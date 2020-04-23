@@ -78,7 +78,7 @@ def wrapText(text, width):
 
 
 
-def printAdvice(text, width=40, name="Tom Nook", imageName="tomNook.dat", imageWidth=16):
+def printAdvice(text, width=40, name="Tom Nook", imageName="tomNook.txt", imageWidth=16):
   text = wrapText(text, width)
   height = max(len(text), 3)
   if height > len(text): text.extend((height - len(text)) * [width * " "])
@@ -96,18 +96,10 @@ def printAdvice(text, width=40, name="Tom Nook", imageName="tomNook.dat", imageW
       for x, y, z in zip(bubbleLeftBorder[:-1], text, bubbleRightBorder[:-1])])
   bubble.append("{}{}{}".format(bubbleLeftBorder[-1], bubbleBottomBorder, bubbleRightBorder[-1]))
 
-  with open(imageName, "rb") as f: image = f.read().splitlines()
-  if len(bubble) > len(image): image = ((len(bubble) - len(image)) * [imageWidth * b" "]) + image
+  with open(imageName, "r") as f: image = f.read().splitlines()
+  if len(bubble) > len(image): image = ((len(bubble) - len(image)) * [imageWidth * " "]) + image
   elif len(bubble) < len(image): bubble = ((len(image) - len(bubble)) * [""]) + bubble
-
-  for imageLine, bubbleLine in zip(image, bubble):
-    sys.stdout.buffer.write(imageLine)
-
-    if bubble != "":
-      print(" ", end="")
-      print(bubbleLine, end="")
-
-    print("")
+  print("\n".join(["{} {}".format(x, y) for x, y in zip(image, bubble)]))
 
 
 
